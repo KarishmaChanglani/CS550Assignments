@@ -505,10 +505,13 @@ If neither is true return false
 ;otherwise return false
 
 (define (no-constants? expr)
-  'replace-this-with-your-implementation
-)
+  (cond [(is-constant? expr) #f]
+        [(is-variable? expr) #t]
+        [(is-not? expr) (no-constants? (op1 expr))]
+        [else (and (no-constants? (op1 expr)) (no-constants? (op2 expr)))]
+))
 
-#|
+
 ;Checks
 (define-test-suite no-constants-suite
 
@@ -523,16 +526,21 @@ If neither is true return false
 (check-equal? (no-constants? '(or (and (not a) (not b)) (or (and x y) #t)) ) #f)
 )
 (run-tests no-constants-suite 'verbose)
-|#
+
   
 ;no-double-negatives
 ;Returns #f if the expression contains a double negative
 
 (define (no-double-negatives? expr)
-  'replace-this-with-your-implementation
-)
+  (cond [(is-constant? expr) #t]
+        [(is-variable? expr) #t]
+        [(is-not? expr) (cond [(is-variable? (op1 expr)) #t]
+                              [(is-constant? (op1 expr)) #t]
+                              [(is-not? (op1 expr)) #f]
+                              [else (no-double-negatives? (op1 expr))])]
+        [else (and (no-double-negatives? (op1 expr)) (no-double-negatives? (op2 expr)))]
+))
 
-#|
 ;Checks
 (define-test-suite no-double-negatives-suite
 
@@ -545,7 +553,7 @@ If neither is true return false
 (check-equal? (no-double-negatives? '(or (and (not a) (not b)) (or (not x) (not y)))) #t)
 )
 (run-tests no-double-negatives-suite 'verbose)
-|#
+
 
 ;is-simplified?
 ;Given an expression determine if it is simplified
@@ -553,10 +561,10 @@ If neither is true return false
 ;and no double negatives.
 
 (define (is-simplified? expr)
-  'replace-this-with-your-implementation
+  (if (is-constant? expr) #t (and (no-constants? expr) (no-double-negatives? expr)))
 )
 
-#|
+
 ;Checks
 (define-test-suite is-simplified-suite
 
@@ -578,9 +586,10 @@ If neither is true return false
 (check-equal? (is-simplified? '(or (and (not a) (not b)) (or (not x) (not y)))) #t)
 (check-equal? (is-simplified? '(or (and (not a) (not b)) (or (not #f) (not y)))) #f)
 (check-equal? (is-simplified? '(or (and (not a) (not (not b))) (or (not #f) (not y)))) #f)
-  )
+  
+)
 (run-tests is-simplified-suite 'verbose)
-|#
+
 
 #|
 Part 4
