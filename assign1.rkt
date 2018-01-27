@@ -486,23 +486,112 @@ Students should prove the following theorems:
 
 1)  (bool-eval '(not expr) env) = (bool-eval (not-simp expr) env)
 
-...
+To prove: (bool-eval '(not expr) env) = (bool-eval (not-simp expr) env)
+
+(bool-eval `(not expr) env) = (bool-eval (not (bool-eval (op1 expr) env))
+
+If expr is a constant or a variable then `(not-simp expr) = `(not expr) hence,
+The above statement is true.
+
+If expr is an expression that is not a "not" expression then (not-simp expr) = (list `not expr) = `(not expr)
+If expr is-not? = #t then (not-simp expr) = (op1 expr) = (not (not (op1 expr)) <-- (not (not expr)) = expr by definition of not
+but since expr is-not? = #t then (not (op1 expr)) = expr Hence, `(not-simp expr) and `(not expr) evaluate to the same value.
+Hence, Proved that 
+(bool-eval `(not expr) env) = (bool-eval (not (bool-eval (op1 expr) env))
 
 2)  (bool-eval '(and expr1 expr2) env) =
     (bool-eval (and-simp expr1 expr2) env)
 
-...
+To prove:  (bool-eval '(and expr1 expr2) env) = (bool-eval (and-simp expr1 expr2) env)
+
+If expr1 and expr2 are both a constant or both a variable then (and-simp expr1 expr2) = (and expr1 expr2)
+ and (bool-eval `(and expr1 expr2) env) = (and (bool-eval (op1 expr) env)
+                         (bool-eval (op2 expr) env)) = (and expr1 expr2) (by definition of bool-eval)
+Hence, the two evaluate the same.
+
+If expr1 and expr2 are both expressions then
+(and-simp expr1 expr2) = (list `and expr1 expr2) = `(and expr1 expr2)
+Which when put in bool-eval gives (bool-eval (and-simp expr1 expr2) env) = (bool-eval '(and expr1 expr2) env)
+
+If (or (equals expr1 #f) (equals expr2 #f)) then (and-simp expr1 expr2) = #f
+looking at definition of bool-eval (bool-eval `(and expr1 expr2) env) = (and (bool-eval expr1 env) (bool-eval expr2 env))
+but if expr1 or expr2 is #f then by definition of "and" (and (bool-eval expr1 env) (bool-eval expr2 env)) = #f.since by definition of bool-eval
+if expr is a constant then we should get expr back.
+
+Hence, again (bool-eval '(and expr1 expr2) env) = (bool-eval (and-simp expr1 expr2) env)
+
+Similarly if expr1 = #t then (and-simp expr1 and expr2) = expr2. And by definition of and, (and (bool-eval expr1 env) (bool-eval expr2 env)) = (bool-eval expr2)
+Since (bool-eval expr1) = expr1 if expr1 is a constant. So we can say that (bool-eval (and-simp expr1 expr2) env) = (bool-eval expr2 env)
+And (bool-eval '(and expr1 expr2) env) = (bool-eval expr2 env) Hence, (bool-eval '(and expr1 expr2) env) = (bool-eval (and-simp expr1 expr2) env)
+
+We can do the same proof if we reverse the roles of expr1 and expr2
+
+Hence, proved for all possible cases.
 
 
 3)  (bool-eval '(or expr1 expr2) env) =
     (bool-eval (or-simp expr1 expr2) env)
 
-...
+If expr1 and expr2 are both a constant or both a variable then (or-simp expr1 expr2) = (or expr1 expr2)
+ or (bool-eval `(or expr1 expr2) env) = (or (bool-eval (op1 expr) env)
+                         (bool-eval (op2 expr) env)) = (or expr1 expr2) (by definition of bool-eval)
+Hence, the two evaluate the same.
+
+If expr1 and expr2 are both expressions then
+(or-simp expr1 expr2) = (list `or expr1 expr2) = `(or expr1 expr2)
+Which when put in bool-eval gives (bool-eval (or-simp expr1 expr2) env) = (bool-eval '(or expr1 expr2) env)
+
+If (or (equals expr1 #t) (equals expr2 #t)) then (or-simp expr1 expr2) = #t
+looking at definition of bool-eval (bool-eval `(or expr1 expr2) env) = (or (bool-eval expr1 env) (bool-eval expr2 env))
+but if expr1 or expr2 is #f then by definition of "or" (or (bool-eval expr1 env) (bool-eval expr2 env)) = #f.since by definition of bool-eval
+if expr is a constant then we should get expr back.
+
+Hence, again (bool-eval '(or expr1 expr2) env) = (bool-eval (or-simp expr1 expr2) env)
+
+Similarly if expr1 = #f then (or-simp expr1 and expr2) = expr2. And by definition of or, (or (bool-eval expr1 env) (bool-eval expr2 env)) = (bool-eval expr2)
+Since (bool-eval expr1) = expr1 if expr1 is a constant. So we can say that (bool-eval (or-simp expr1 expr2) env) = (bool-eval expr2 env)
+And (bool-eval '(or expr1 expr2) env) = (bool-eval expr2 env) Hence, (bool-eval '(or expr1 expr2) env) = (bool-eval (or-simp expr1 expr2) env)
+
+We can do the same proof if we reverse the roles of expr1 and expr2
+
+Hence, proved for all possible cases.
 
 4)  (bool-eval expr env) = (bool-eval (bool-simp expr) env)
 
-...
+Base Case: 
+if expr is a constant or a variable then (bool-simp expr) = expr.
+Hence,(bool-eval (bool-simp expr) env) = (bool-eval expr env)
 
+Inductive Hypothesis:
+(bool-eval (bool-simp (op1 expr)) env) =  (bool-eval (op1 expr) env) and same for (op2 expr)
+
+If expr is an expression then we have three possible cases:
+is-not? expr. If expr is a is-not then (bool-simp expr) = (not-simp (op1 expr)) #using inductive hypothesis. 
+Which means that (bool-eval(bool-simp expr) env) = (bool-eval (not-simp expr) env)
+Since expr is a is-not expression we can say that expr = '(not (op1 expr))
+(bool-eval expr env) = (bool-eval '(not (op1 expr)) env) However, we proved in 1) that
+(bool-eval '(not expr) env) = (bool-eval (not-simp expr) env)
+Hence,
+(bool-eval '(not (op1 expr)) env) = (bool-eval (not-simp (op1 expr)) env), Must also be true. 
+
+is-and? expr. If expr is a is-and then (bool-simp expr) = (and-simp (bool-simp (op1 expr))) (bool-simp (op2 expr)))
+By inductive hypothesis we have (bool-simp expr) = (and-simp (op1 expr) (op2 expr))
+We can express expr = `(and (op1 expr) (op2 expr))
+However, we have already proved that (bool-eval '(and expr1 expr2) env) =
+    (bool-eval (and-simp expr1 expr2) env)
+Hence it stands to reason that
+(bool-eval `(and (op1 expr) (op2 expr)) env) = (bool-eval (and-simp (op1 expr) (op2 expr)) env) must also be true.
+
+is-and? expr. If expr is a is-or? then (bool-simp expr) = (and-simp (bool-simp (op1 expr))) (bool-simp (op2 expr)))
+By inductive hypothesis we have (bool-simp expr) = (or-simp (op1 expr) (op2 expr))
+We can express expr = `(or (op1 expr) (op2 expr))
+However, we have already proved that (bool-eval '(or expr1 expr2) env) =
+    (bool-eval (or-simp expr1 expr2) env)
+Hence it stands to reason that
+(bool-eval `(or (op1 expr) (op2 expr)) env) = (bool-eval (or-simp (op1 expr) (op2 expr)) env) must also be true.
+
+Therefore, for all cases of bool-simp we have proved that
+(bool-eval (bool-simp expr) env) =  (bool-eval expr env)
 
 |#
 
