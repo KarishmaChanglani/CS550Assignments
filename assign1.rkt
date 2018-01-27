@@ -277,10 +277,14 @@ You should implement bool-simp, not-simp, or-simp, and and-simp.
 ;then the call to not-simp will be (not-simp #t)
 ;
 (define (not-simp expr)
-  'replace-this-with-your-implementation
+  (cond
+   [(is-constant? expr) (not expr)]
+   [(is-variable? expr) (list `not expr)]
+   [(is-not? expr) (op1 expr)]
+   [else (list `not expr)])
 )
 
-#|
+
 ;Checks
 (define-test-suite not-simp-suite
 (check-equal? (not-simp #t) #f)
@@ -289,10 +293,9 @@ You should implement bool-simp, not-simp, or-simp, and and-simp.
 (check-equal? (not-simp '(and a b)) '(not (and a b)))
 (check-equal? (not-simp '(not a)) 'a)
 (check-equal? (not-simp '(not (and b c))) '(and b c))
-
 )
 (run-tests not-simp-suite 'verbose)
-|#
+
 
 ;and-simp
 ;Simplify input to an AND function.
@@ -304,10 +307,16 @@ You should implement bool-simp, not-simp, or-simp, and and-simp.
 ;then the call to and-simp will be (and-simp #t #f)
 ;
 (define (and-simp expr1 expr2)
-  'replace-this-with-your-implementation
+  (cond
+   [(and (is-constant? expr1)(is-constant? expr2)) (and expr1 expr2)]
+   [(equal? expr1 #t) expr2]
+   [(equal? expr2 #t) expr1]
+   [(or (equal? expr1 #f) (equal? expr2 `#f)) #f]
+   [else (list `and expr1 expr2)]
+   )
 )
 
-#|
+
 ;Checks
 (define-test-suite and-simp-suite
 
@@ -323,7 +332,7 @@ You should implement bool-simp, not-simp, or-simp, and and-simp.
 (check-equal? (and-simp 'a 'b)  '(and a b))
 )
 (run-tests and-simp-suite 'verbose)
-|#
+
 
 ;or-simp
 ;Simplify input to an OR function.
@@ -335,10 +344,16 @@ You should implement bool-simp, not-simp, or-simp, and and-simp.
 ;then the call to or-simp will be (or-simp #t #f)
 ;
 (define (or-simp expr1 expr2)
-  'replace-this-with-your-implementation
+  (cond
+   [(and (is-constant? expr1)(is-constant? expr2)) (or expr1 expr2)]
+   [(equal? expr1 #f) expr2]
+   [(equal? expr2 #f) expr1]
+   [(or (equal? expr1 #t) (equal? expr2 `#t)) #t]
+   [else (list `or expr1 expr2)]
+   )
 )
 
-#|
+
 ;checks
 (define-test-suite or-simp-suite
 
@@ -354,7 +369,7 @@ You should implement bool-simp, not-simp, or-simp, and and-simp.
 (check-equal? (or-simp 'a 'b)  '(or a b))
 )
 (run-tests or-simp-suite 'verbose)
-|#
+
   
 ;bool-simp
 ;Simplfy a bolean expression.
@@ -368,10 +383,18 @@ You should implement bool-simp, not-simp, or-simp, and and-simp.
 ;helper function.
 ;
 (define (bool-simp expr)
-  'replace-this-with-your-implementation
+  (cond
+    [(is-constant? expr) expr]
+    [(is-variable? expr) expr]
+    [(is-not? expr) (not-simp (bool-simp (op1 expr)))]
+    [(is-or? expr)  (or-simp (bool-simp (op1 expr))
+                        (bool-simp (op2 expr)))]
+    [(is-and? expr)  (and-simp (bool-simp (op1 expr))
+                        (bool-simp (op2 expr)))]
+   )
 )
 
-#|
+
 (define-test-suite bool-simp-suite
 
 ;Rules using not
@@ -425,7 +448,7 @@ You should implement bool-simp, not-simp, or-simp, and and-simp.
 )
 )
 (run-tests bool-simp-suite 'verbose)
-|#
+
   
 #|
 Part 2
