@@ -646,9 +646,7 @@ If neither is true return false
 (define (no-double-negatives? expr)
   (cond [(is-constant? expr) #t]
         [(is-variable? expr) #t]
-        [(is-not? expr) (cond [(is-variable? (op1 expr)) #t]
-                              [(is-constant? (op1 expr)) #t]
-                              [(is-not? (op1 expr)) #f]
+        [(is-not? expr) (cond [(is-not? (op1 expr)) #f]
                               [else (no-double-negatives? (op1 expr))])]
         [else (and (no-double-negatives? (op1 expr)) (no-double-negatives? (op2 expr)))]
 ))
@@ -708,4 +706,107 @@ Part 4
 
 Prove by induction that (is-simplified? (bool-simp expr)) is true.
 
+Theorem 4.1: (is-simplified? (bool-simp expr)) = #t
+
+Proof:
+Base Case: (is-constant? expr) = #t
+    (is-simplified? (bool-simp expr)) = (is-simplified? expr) [by definition of bool-simp for constants]
+     = #t [by definition of is-simplified]
+
+Base Case: (is-variable? expr) = #t
+    (is-simplified? (bool-simp expr)) = (is-simplified? expr) [by the definition of bool-simp]
+     = (and (no-constants? expr) (no-double-negatives? expr)) [by the definition of is-simplified?]
+     = (and (no-constants? expr) #t) [by the defintion of no-double-negatives?]
+     = (and #t #t) [by the definition of no-constants?]
+     = #t
+
+Inductive Hypothesis (and (is-simplified E1) (is-simplified? E2))
+
+Inductive Case:(is-simplified? (bool-simp expr))
+    We will proceed by case analysis.
+    Case IC.1: (is-simplified? (bool-simp expr)) = (is-simplified (not-simp (bool-simp (op1 expr))))
+         = (is-simplified  (not-simp (bool-simp E1)))
+         = (is-simplfified (not-simp E1)) [by the Inductive Hypothesis]
+         = #t [by Lemma 4.1]
+
+    Case IC.2: (is-simplified? (bool-simp expr)) = (is-simplified (or-simp (bool-simp (op1 expr)) (bool-simp (op2 expr))))
+         = (is-simplified (or-simp (bool-simp E1) (bool-simp E2)))
+         = (is-simplified (or-simp E1 E2)) [by the Inductive Hypothesis]
+         = #t [by Lemma 4.2]
+
+    Case IC.3: (is-simplified? (bool-simp expr)) = (is-simplified (and-simp (bool-simp (op1 expr)) (bool-simp (op2 expr))))
+         = (is-simplified (and-simp (bool-simp E1) (bool-simp E2)))
+         = (is-simplified (and-simp E1 E2)) [by the Inductive Hypothesis]
+         = #t [by Lemma 4.3]
+
+    In all cases, (is-simplified? (bool-simp expr)) = #t
+    
+QED
+
+Lemma 4.1 (is-simplified Ei) -> (is-simplfified (not-simp Ei))
+
+Proof: We will prove this by cases.
+    Case 1: (is-constant? Ei)
+        (is-simplified (not-simp Ei)) = (is-simplified (not Ei)) = #t [by the def. of not-simp; the negation of a constant is a constant]
+
+    Case 2: (is-variable Ei)
+        (is-simplified (not-simp Ei)) = (is-simplified ('not Ei)) [by the def. of not-simp]
+         = (and (no-constants? ('not Ei)) (no-double-negatives (list 'not Ei))) [by the def. of is-simplified]
+         = (and (no-constants? Ei) (no-double-negatives Ei)) [by the def. of no-constants? and no-double-negatives?]
+         = (and #t #t) [by the def. of no-constants? and no-double-negatives?]
+         = #t
+
+   Case 3: (is-not? Ei)
+        (is-simplified (not-simp Ei)) = (is-simplified (op1 Ei))
+         = (is-simplified Ei)
+         Since Ei is simplified, we know that Ei has no constants nor double-negatives. This means no smaller part of Ei has a constant or double-negative.
+
+   Case 4: Otherwise
+        (is-simplified (not-simp Ei)) = (is-simplified (list 'not Ei)) [by the def. of not-simp]
+         = (is-simplified Ei)
+        Since Ei is simplified, we know that Ei has no constants nor double-negatives. This means no smaller part of Ei has a constant or double-negative.
+        Furthermore, Ei must be an and-expression or an or-expression, so (list 'not Ei) is not a double-negative.
+
+   In all cases, (is-simplified Ei) -> (is-simplified (not-simp Ei)).
+QED
+
+Lemma 4.2: (and (is-simplified E1) (is-simplified? E2)) -> (is-simplified (or-simp E1 E2))
+
+Proof: We will show this by case analysis.
+    Case 1: (equal? E1 #f)
+        (is-simplified (or-simp #f E2)) = (is-simplified? E2) [by the def. of or-simp]
+         = #t
+    Case 2: (equal? E2 #f)
+         (is-simplified (or-simp E1 #f)) = (is-simplified? E1) [by the def. of or-simp]
+          = #t
+    Case 3: (or (equal? E1 #t) (equal? E2 #t))
+         (is-simplified (or-simp E1 E2)) = (is-simplified #t) [by the def. of or-simp]
+          = #t [by the def. of is-simplified]
+    Case 4: Otherwise
+         (is-simplified (or-simp E1 E2)) = (is-simplified (list 'or E1 E2)) [by the def. of or-simp]
+          = #t
+         Since E1 and E2 are simplified and in this case not constants, neither E1 nor E2 contain constants or double-negatives, and an or-statement cannot create a double-negative by specification]
+
+    In all cases, (and (is-simplified E1) (is-simplified? E2)) -> (is-simplified (or-simp E1 E2))
+QED
+
+Lemma 4.3: (and (is-simplified E1) (is-simplified? E2)) -> (is-simplified (and-simp E1 E2))
+
+Proof: We will show this by case analysis.
+    Case 1: (equal? E1 #t)
+        (is-simplified (and-simp #t E2)) = (is-simplified? E2) [by the def. of and-simp]
+         = #t
+    Case 2: (equal? E2 #t)
+         (is-simplified (and-simp E1 #t)) = (is-simplified? E1) [by the def. of and-simp]
+          = #t
+    Case 3: (or (equal? E1 #f) (equal? E2 #f))
+         (is-simplified (and-simp E1 E2)) = (is-simplified #f) [by the def. of and-simp]
+          = #t [by the def. of is-simplified]
+    Case 4: Otherwise
+         (is-simplified (and-simp E1 E2)) = (is-simplified (list 'and E1 E2)) [by the def. of and-simp]
+          = #t
+         Since E1 and E2 are simplified and in this case not constants, neither E1 nor E2 contain constants or double-negatives, and an and-statement cannot create a double-negative by specification]
+
+    In all cases, (and (is-simplified E1) (is-simplified? E2)) -> (is-simplified (and-simp E1 E2))
+QED
 |#
