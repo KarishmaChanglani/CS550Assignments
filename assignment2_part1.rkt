@@ -5,8 +5,6 @@
 
 (require racket/trace)
 
-
-
 (define (stream-enumerate-interval low high)
 (if (> low high)
 empty-stream
