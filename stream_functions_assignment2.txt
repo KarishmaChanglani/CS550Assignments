@@ -1,0 +1,19 @@
+(define (stream-filter pred stream)
+  (cond ((null? stream) '())
+        ((pred (car stream))
+         (cons (car stream)
+                      (stream-filter pred
+                                     (cdr stream))))
+        (else (stream-filter pred (cdr stream)))))  
+        
+(define (stream-enumerate-interval low high)
+(if (> low high)
+'()
+(cons
+low
+(stream-enumerate-interval (+ low 1) high))))
+
+(display (car
+(cdr
+ (stream-filter prime?
+ (stream-enumerate-interval 10000 1000000)))))
